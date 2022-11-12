@@ -27,6 +27,6 @@ func TestServer_Start(t *testing.T) {
 
 		resp, err := http.Get("http://localhost:8081/")
 		require.NoError(t, err)
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 }
