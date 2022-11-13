@@ -41,7 +41,7 @@ func start() int {
 	}()
 
 	host := getStringOrDefault("HOST", "localhost")
-	port := getIntOrDefault("PORT", 8081)
+	port := getIntOrDefault("PORT", 8080)
 
 	s := server.New(server.Options{
 		Host: host,

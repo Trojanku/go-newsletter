@@ -25,7 +25,7 @@ func TestServer_Start(t *testing.T) {
 		cleanup := integrationtest.CreateServer()
 		defer cleanup()
 
-		resp, err := http.Get("http://localhost:8081/")
+		resp, err := http.Get("http://localhost:8080/")
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	})

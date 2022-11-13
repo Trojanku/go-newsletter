@@ -1,9 +1,12 @@
 package views
 
-import "html/template"
+import (
+	"Goo/templates"
+	"html/template"
+)
 
-func LoadTemplate(path string) (*template.Template, error) {
-	tmpl, err := template.ParseFiles(path)
+func LoadTemplate() (*template.Template, error) {
+	tmpl, err := template.New("").Parse(templates.Index)
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// CreateServer for testing on port 8081, returning a cleanup function that stops the server.
+// CreateServer for testing on port 8080, returning a cleanup function that stops the server.
 // Usage:
 //
 //	cleanup := CreateServer()
@@ -15,7 +15,7 @@ import (
 func CreateServer() func() {
 	s := server.New(server.Options{
 		Host: "localhost",
-		Port: 8081,
+		Port: 8080,
 	})
 
 	go func() {
@@ -25,7 +25,7 @@ func CreateServer() func() {
 	}()
 
 	for {
-		_, err := http.Get("http://localhost:8081/")
+		_, err := http.Get("http://localhost:8080/")
 		if err == nil {
 			break
 		}
