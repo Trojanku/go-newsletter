@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"time"
+
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 type Database struct {
@@ -83,7 +85,7 @@ func (d *Database) createDataSourceName(withPassword bool) string {
 	if !withPassword {
 		password = "xxx"
 	}
-	return fmt.Sprintf("postgresql://%v:%v@%v:%v%v?sslmode=disable", d.user, password, d.host, d.port, d.name)
+	return fmt.Sprintf("postgresql://%v:%v@%v:%v/%v?sslmode=disable", d.user, password, d.host, d.port, d.name)
 }
 
 func (d *Database) Ping(ctx context.Context) error {
