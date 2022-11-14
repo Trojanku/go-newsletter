@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+  postgres-test:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: goo
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: template1
+    ports:
+      - "5433:5432"
+volumes:
+  postgres:

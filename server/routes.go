@@ -16,6 +16,6 @@ func (s *Server) setupRoutes() {
 
 type signupperMock struct{}
 
-func (s signupperMock) SignupForNewsletter(ctx context.Context, email model.Email) (string, error) {
+func (s signupperMock) SignupForNewsletter(_ context.Context, _ model.Email) (string, error) {
 	return "", nil
 }
