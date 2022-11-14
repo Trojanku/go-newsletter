@@ -77,7 +77,7 @@ func start() int {
 		log.Error("Unknown command", zap.String("name", os.Args[1]))
 		return 1
 	}
-	if err != nil {
+	if err != nil && err != migrate.ErrNoChange {
 		log.Error("Error migrating", zap.Error(err))
 		return 1
 	}

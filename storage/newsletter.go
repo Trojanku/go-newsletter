@@ -15,7 +15,7 @@ func (d *Database) SignupForNewsletter(ctx context.Context, email model.Email) (
 	query := `insert into newsletter_subscribers (email, token)
 		values ($1, $2)
 		on conflict (email) do update set
-			token = excluded.token
+			token = excluded.token,
 			updated = now()`
 	_, err = d.DB.ExecContext(ctx, query, email, token)
 	return token, err

@@ -12,7 +12,7 @@ services:
   postgres-test:
     image: postgres:12
     environment:
-      POSTGRES_USER: goo
+      POSTGRES_USER: test
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: template1
     ports:

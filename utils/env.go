@@ -4,8 +4,42 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
+
+func GetStringOrDefault(name, defaultV string) string {
+	v, ok := os.LookupEnv(name)
+	if !ok {
+		return defaultV
+	}
+	return v
+}
+
+func GetIntOrDefault(name string, defaultV int) int {
+	v, ok := os.LookupEnv(name)
+	if !ok {
+		return defaultV
+	}
+	vAsInt, err := strconv.Atoi(v)
+	if err != nil {
+		return defaultV
+	}
+	return vAsInt
+}
+
+func GetDurationOrDefault(name string, defaultV time.Duration) time.Duration {
+	v, ok := os.LookupEnv(name)
+	if !ok {
+		return defaultV
+	}
+	vAsDuration, err := time.ParseDuration(v)
+	if err != nil {
+		return defaultV
+	}
+	return vAsDuration
+}
 
 // Load environment variables from environment files. Defaults to loading from .env.
 func Load(paths ...string) error {
@@ -36,4 +70,11 @@ func Load(paths ...string) error {
 		_ = file.Close()
 	}
 	return nil
+}
+
+// MustLoad calls Load and panics on errors.
+func MustLoad(paths ...string) {
+	if err := Load(paths...); err != nil {
+		panic(err)
+	}
 }

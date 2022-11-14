@@ -4,13 +4,15 @@ package main
 
 import (
 	"Goo/server"
+	"Goo/storage"
+	"Goo/utils"
 	"context"
 	"fmt"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -24,9 +26,11 @@ func main() {
 }
 
 func start() int {
-	logEnv := getStringOrDefault("LOG_ENV", "development")
+	_ = utils.Load()
 
+	logEnv := utils.GetStringOrDefault("LOG_ENV", "development")
 	log, err := createLogger(logEnv)
+
 	if err != nil {
 		fmt.Println("Error setting up the logger: ", err)
 		return 1
@@ -40,13 +44,14 @@ func start() int {
 		_ = log.Sync()
 	}()
 
-	host := getStringOrDefault("HOST", "localhost")
-	port := getIntOrDefault("PORT", 8080)
+	host := utils.GetStringOrDefault("HOST", "localhost")
+	port := utils.GetIntOrDefault("PORT", 8080)
 
 	s := server.New(server.Options{
-		Host: host,
-		Log:  log,
-		Port: port,
+		Database: createDatabase(log),
+		Host:     host,
+		Log:      log,
+		Port:     port,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
@@ -88,22 +93,16 @@ func createLogger(env string) (*zap.Logger, error) {
 	}
 }
 
-func getStringOrDefault(name, defaultV string) string {
-	v, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultV
-	}
-	return v
-}
-
-func getIntOrDefault(name string, defaultV int) int {
-	v, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultV
-	}
-	vAsInt, err := strconv.Atoi(v)
-	if err != nil {
-		return defaultV
-	}
-	return vAsInt
+func createDatabase(log *zap.Logger) *storage.Database {
+	return storage.NewDatabase(storage.NewDatabaseOptions{
+		Host:                  utils.GetStringOrDefault("DB_HOST", "localhost"),
+		Port:                  utils.GetIntOrDefault("DB_PORT", 5432),
+		User:                  utils.GetStringOrDefault("DB_USER", ""),
+		Password:              utils.GetStringOrDefault("DB_PASSWORD", ""),
+		Name:                  utils.GetStringOrDefault("DB_NAME", ""),
+		MaxOpenConnections:    utils.GetIntOrDefault("DB_MAX_OPEN_CONNECTIONS", 10),
+		MaxIdleConnections:    utils.GetIntOrDefault("DB_MAX_IDLE_CONNECTIONS", 10),
+		ConnectionMaxLifetime: utils.GetDurationOrDefault("DB_CONNECTION_MAX_LIFETIME", time.Hour),
+		Log:                   log,
+	})
 }
