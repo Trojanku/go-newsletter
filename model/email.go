@@ -20,6 +20,6 @@ func (e Email) IsValid() bool {
 	return emailAddressMatcher.MatchString(string(e))
 }
 
-func (e Email) string() string {
+func (e Email) String() string {
 	return string(e)
 }
