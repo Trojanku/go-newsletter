@@ -1,4 +1,4 @@
-# go-service
+# Newsletter service in golang
 
 Cloud service template build in golang.
 
@@ -8,3 +8,5 @@ Cloud service template build in golang.
 * postgres
 * templates migration
 * newsletter signup
+
+https://www.golang.dk/courses/build-cloud-apps-in-go
