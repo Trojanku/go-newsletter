@@ -3,11 +3,16 @@
 package main
 
 import (
+	"Goo/messaging"
 	"Goo/server"
 	"Goo/storage"
 	"Goo/utils"
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/smithy-go/logging"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -47,11 +52,20 @@ func start() int {
 	host := utils.GetStringOrDefault("HOST", "localhost")
 	port := utils.GetIntOrDefault("PORT", 8080)
 
+	awsConfig, err := config.LoadDefaultConfig(context.Background(),
+		config.WithLogger(createAWSLogAdapter(log)),
+		config.WithEndpointResolverWithOptions(createAWSEndpointResolver()),
+	)
+	if err != nil {
+		log.Info("Error creating AWS config", zap.Error(err))
+	}
+
 	s := server.New(server.Options{
 		Database: createDatabase(log),
 		Host:     host,
 		Log:      log,
 		Port:     port,
+		Queue:    createQueue(log, awsConfig),
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
@@ -93,6 +107,33 @@ func createLogger(env string) (*zap.Logger, error) {
 	}
 }
 
+func createAWSLogAdapter(log *zap.Logger) logging.LoggerFunc {
+	return func(classification logging.Classification, format string, v ...interface{}) {
+		switch classification {
+		case logging.Debug:
+			log.Sugar().Debugf(format, v...)
+		case logging.Warn:
+			log.Sugar().Warnf(format, v...)
+		}
+	}
+}
+
+// createAWSEndpointResolver used for local development endpoints.
+// See https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/endpoints/
+func createAWSEndpointResolver() aws.EndpointResolverWithOptionsFunc {
+	sqsEndpointURL := utils.GetStringOrDefault("SQS_ENDPOINT_URL", "")
+
+	return func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		if sqsEndpointURL != "" && service == sqs.ServiceID {
+			return aws.Endpoint{
+				URL: sqsEndpointURL,
+			}, nil
+		}
+		// Fallback to default endpoint
+		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	}
+}
+
 func createDatabase(log *zap.Logger) *storage.Database {
 	return storage.NewDatabase(storage.NewDatabaseOptions{
 		Host:                  utils.GetStringOrDefault("DB_HOST", "localhost"),
@@ -104,5 +145,14 @@ func createDatabase(log *zap.Logger) *storage.Database {
 		MaxIdleConnections:    utils.GetIntOrDefault("DB_MAX_IDLE_CONNECTIONS", 10),
 		ConnectionMaxLifetime: utils.GetDurationOrDefault("DB_CONNECTION_MAX_LIFETIME", time.Hour),
 		Log:                   log,
+	})
+}
+
+func createQueue(log *zap.Logger, awsConfig aws.Config) *messaging.Queue {
+	return messaging.NewQueue(messaging.NewQueueOptions{
+		Config:   awsConfig,
+		Log:      log,
+		Name:     utils.GetStringOrDefault("QUEUE_NAME", "jobs"),
+		WaitTime: utils.GetDurationOrDefault("QUEUE_WAIT_TIME", 20*time.Second),
 	})
 }

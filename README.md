@@ -3,10 +3,12 @@
 Cloud service template build in golang.
 
 * docker
-* aws lightsail deployment
+* AWS lightsail deployment
+* AWS SQS
 * tests
 * postgres
 * templates migration
 * newsletter signup
+* message queue
 
 https://www.golang.dk/courses/build-cloud-apps-in-go

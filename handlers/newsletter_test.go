@@ -35,7 +35,7 @@ func TestNewsletterSignup(t *testing.T) {
 	mux := chi.NewMux()
 	s := &signupperMock{}
 	q := &senderMock{}
-	handlers.NewsletterSignup(mux, s, q)
+	handlers.NewsletterSignup(nil, mux, s, q)
 
 	t.Run("signs up a valid email address and sends a message", func(t *testing.T) {
 		code, _, _ := makePostRequest(mux, "/newsletter/signup", createFormHeader(),
