@@ -1,0 +1,33 @@
+package integrationtest
+
+import (
+	"Goo/utils"
+	"context"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+)
+
+func getAWSConfig() aws.Config {
+	awsConfig, err := config.LoadDefaultConfig(context.Background(),
+		config.WithEndpointResolverWithOptions(createAWSEndpointResolver()))
+	if err != nil {
+		panic(err)
+	}
+	return awsConfig
+}
+
+func createAWSEndpointResolver() aws.EndpointResolverWithOptionsFunc {
+	sqsEndpointURL := utils.GetStringOrDefault("SQS_ENDPOINT_URL", "")
+	if sqsEndpointURL == "" {
+		panic("sqs endpoint URL must be set in testing with env SQS_ENDPOINT_URL")
+	}
+	return func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		if sqsEndpointURL != "" && service == sqs.ServiceID {
+			return aws.Endpoint{
+				URL: sqsEndpointURL,
+			}, nil
+		}
+		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	}
+}
