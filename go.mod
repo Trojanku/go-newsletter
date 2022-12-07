@@ -6,7 +6,9 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.17.1
 	github.com/aws/aws-sdk-go-v2/config v1.11.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.19.15
+	github.com/aws/smithy-go v1.13.4
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jmoiron/sqlx v1.3.5
@@ -24,7 +26,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.5.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.6.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.11.1 // indirect
-	github.com/aws/smithy-go v1.13.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -42,5 +43,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
