@@ -83,18 +83,20 @@ func (e *Emailer) SendNewsletterConfirmationEmail(to model.Email, token string) 
 		From:      e.transactionalFrom,
 		ToAddress: to.String(),
 		// TODO: change to name
-		ToName:  to.String(),
-		Subject: "Confirm your subscription to the newsletter",
-		Content: getEmail("confirmation_email.html", keywords),
+		ToName:      to.String(),
+		Subject:     "Confirm your subscription to the newsletter",
+		ContentHTML: getEmail("confirmation_email.html", keywords),
+		ContextText: getEmail("confirmation_email.txt", keywords),
 	})
 }
 
 type requestBody struct {
-	From      string
-	ToAddress string
-	ToName    string
-	Subject   string
-	Content   string
+	From        string
+	ToAddress   string
+	ToName      string
+	Subject     string
+	ContentHTML string
+	ContextText string
 }
 
 func (e *Emailer) send(body requestBody) error {
@@ -103,7 +105,8 @@ func (e *Emailer) send(body requestBody) error {
 	m.SetHeader("From", body.From)
 	m.SetAddressHeader("To", body.ToAddress, body.ToName)
 	m.SetHeader("Subject", body.Subject)
-	m.SetBody("text/html", body.Content)
+	m.SetBody("text/html", body.ContentHTML)
+	m.SetBody("text/plain", body.ContextText)
 
 	if err := e.dialer.DialAndSend(m); err != nil {
 		return fmt.Errorf("could not send email: %w", err)

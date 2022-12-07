@@ -1,0 +1,7 @@
+Confirm your subscription to the newsletter by clicking the link below:
+
+{{action_url}}
+
+Goo
+Some Street
+Earth
