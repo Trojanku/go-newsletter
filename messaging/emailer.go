@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"Goo/model"
+	"context"
 	"embed"
 	"fmt"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func setupDialer(settings dialerSettings) *gomail.Dialer {
 
 // SendNewsletterConfirmationEmail with a confirmation link.
 // This is a transactional email, because it's a response to a user action.
-func (e *Emailer) SendNewsletterConfirmationEmail(to model.Email, token string) error {
+func (e *Emailer) SendNewsletterConfirmationEmail(_ context.Context, to model.Email, token string) error {
 	keywords := map[string]string{
 		"base_url":   e.baseURL,
 		"action_url": e.baseURL + "/newsletter/confirm?token=" + token,
