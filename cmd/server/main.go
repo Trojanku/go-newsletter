@@ -3,6 +3,7 @@
 package main
 
 import (
+	"Goo/jobs"
 	"Goo/messaging"
 	"Goo/server"
 	"Goo/storage"
@@ -60,12 +61,20 @@ func start() int {
 		log.Info("Error creating AWS config", zap.Error(err))
 	}
 
+	queue := createQueue(log, awsConfig)
+
 	s := server.New(server.Options{
 		Database: createDatabase(log),
 		Host:     host,
 		Log:      log,
 		Port:     port,
-		Queue:    createQueue(log, awsConfig),
+		Queue:    queue,
+	})
+
+	r := jobs.NewRunner(jobs.NewRunnerOptions{
+		Emailer: createEmailer(log, host, port),
+		Log:     log,
+		Queue:   queue,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
@@ -78,6 +87,11 @@ func start() int {
 			log.Info("Error starting server", zap.Error(err))
 			return err
 		}
+		return nil
+	})
+
+	eg.Go(func() error {
+		r.Start(ctx)
 		return nil
 	})
 
@@ -154,5 +168,22 @@ func createQueue(log *zap.Logger, awsConfig aws.Config) *messaging.Queue {
 		Log:      log,
 		Name:     utils.GetStringOrDefault("QUEUE_NAME", "jobs"),
 		WaitTime: utils.GetDurationOrDefault("QUEUE_WAIT_TIME", 20*time.Second),
+	})
+}
+
+func createEmailer(log *zap.Logger, host string, port int) *messaging.Emailer{
+	return messaging.NewEmailer(messaging.NewEmailerOptions{
+		BaseURL:                   utils.GetStringOrDefault("BASE_URL", fmt.Sprintf("http://%v:%v", host, port)),
+		Host:                      utils.GetStringOrDefault("EMAIL_HOST", "localhost"),
+		Port:                       utils.GetIntOrDefault("EMAIL_PORT", 1025),
+		MarketingUsername:         utils.GetStringOrDefault("MARKETING_USERNAME", "Goo bot"),
+		MarketingPassword:         utils.GetStringOrDefault("MARKETING_EMAIL_PASSWORD", ""),
+		TransactionalUsername:      utils.GetStringOrDefault("TRANSACTIONAL_USERNAME", "Goo bot"),
+		TransactionalPassword:     utils.GetStringOrDefault("TRANSACTIONAL_PASSWORD", ""),
+		MarketingEmailAddress:      utils.GetStringOrDefault("MARKETING_EMAIL", "goo.marketing@example.com"),
+		MarketingEmailName:         utils.GetStringOrDefault("MARKETING_EMAIL_NAME", ""),
+		TransactionalEmailAddress:  utils.GetStringOrDefault("TRANSACTIONAL_EMAIL", "goo.transactional@example.com"),
+		TransactionalEmailName:     utils.GetStringOrDefault("TRANSACTIONAL_EMAIL_NAME", ""),
+		Log:                       log,
 	})
 }

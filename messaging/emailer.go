@@ -47,8 +47,8 @@ func NewEmailer(opts NewEmailerOptions) *Emailer {
 	return &Emailer{
 		baseURL: opts.BaseURL,
 
-		marketingFrom:     opts.MarketingEmailName,
-		transactionalFrom: opts.TransactionalEmailName,
+		marketingFrom:     opts.MarketingEmailAddress,
+		transactionalFrom: opts.TransactionalEmailAddress,
 
 		dialer: setupDialer(dialerSettings{
 			Host:     opts.Host,
@@ -103,8 +103,11 @@ type requestBody struct {
 func (e *Emailer) send(body requestBody) error {
 	m := gomail.NewMessage()
 
+	fmt.Printf("Message to send: %v \n",  body.ToAddress)
+	fmt.Printf("Message from: %v \n",  body.From)
+
 	m.SetHeader("From", body.From)
-	m.SetAddressHeader("To", body.ToAddress, body.ToName)
+	m.SetHeader("To", body.ToAddress, body.ToName)
 	m.SetHeader("Subject", body.Subject)
 	m.SetBody("text/html", body.ContentHTML)
 	m.SetBody("text/plain", body.ContextText)

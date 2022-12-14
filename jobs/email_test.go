@@ -4,6 +4,7 @@ import (
 	"Goo/jobs"
 	"Goo/model"
 	"context"
+	"errors"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -36,5 +37,15 @@ func TestSendNewsletterConfirmationEmail(t *testing.T) {
 
 		require.Equal(t, "you@example.com", emailer.to.String())
 		require.Equal(t, "123", emailer.token)
+	})
+
+	t.Run("errors on email sending failure", func(t *testing.T) {
+		emailer := &mockConfirmationEmailer{err: errors.New("wire is cut")}
+		jobs.SendNewsletterConfirmationEmail(r, emailer)
+		job := r["confirmation_email"]
+
+		err := job(context.Background(), model.Message{"email":"you@example.com", "token": "123"})
+
+		require.NotNil(t, err)
 	})
 }
