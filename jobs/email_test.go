@@ -44,7 +44,7 @@ func TestSendNewsletterConfirmationEmail(t *testing.T) {
 		jobs.SendNewsletterConfirmationEmail(r, emailer)
 		job := r["confirmation_email"]
 
-		err := job(context.Background(), model.Message{"email":"you@example.com", "token": "123"})
+		err := job(context.Background(), model.Message{"email": "you@example.com", "token": "123"})
 
 		require.NotNil(t, err)
 	})

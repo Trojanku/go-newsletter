@@ -103,8 +103,8 @@ type requestBody struct {
 func (e *Emailer) send(body requestBody) error {
 	m := gomail.NewMessage()
 
-	fmt.Printf("Message to send: %v \n",  body.ToAddress)
-	fmt.Printf("Message from: %v \n",  body.From)
+	fmt.Printf("Message to send: %v \n", body.ToAddress)
+	fmt.Printf("Message from: %v \n", body.From)
 
 	m.SetHeader("From", body.From)
 	m.SetHeader("To", body.ToAddress, body.ToName)

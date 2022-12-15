@@ -171,19 +171,19 @@ func createQueue(log *zap.Logger, awsConfig aws.Config) *messaging.Queue {
 	})
 }
 
-func createEmailer(log *zap.Logger, host string, port int) *messaging.Emailer{
+func createEmailer(log *zap.Logger, host string, port int) *messaging.Emailer {
 	return messaging.NewEmailer(messaging.NewEmailerOptions{
 		BaseURL:                   utils.GetStringOrDefault("BASE_URL", fmt.Sprintf("http://%v:%v", host, port)),
 		Host:                      utils.GetStringOrDefault("EMAIL_HOST", "localhost"),
-		Port:                       utils.GetIntOrDefault("EMAIL_PORT", 1025),
+		Port:                      utils.GetIntOrDefault("EMAIL_PORT", 1025),
 		MarketingUsername:         utils.GetStringOrDefault("MARKETING_USERNAME", "Goo bot"),
 		MarketingPassword:         utils.GetStringOrDefault("MARKETING_EMAIL_PASSWORD", ""),
-		TransactionalUsername:      utils.GetStringOrDefault("TRANSACTIONAL_USERNAME", "Goo bot"),
+		TransactionalUsername:     utils.GetStringOrDefault("TRANSACTIONAL_USERNAME", "Goo bot"),
 		TransactionalPassword:     utils.GetStringOrDefault("TRANSACTIONAL_PASSWORD", ""),
-		MarketingEmailAddress:      utils.GetStringOrDefault("MARKETING_EMAIL", "goo.marketing@example.com"),
-		MarketingEmailName:         utils.GetStringOrDefault("MARKETING_EMAIL_NAME", ""),
-		TransactionalEmailAddress:  utils.GetStringOrDefault("TRANSACTIONAL_EMAIL", "goo.transactional@example.com"),
-		TransactionalEmailName:     utils.GetStringOrDefault("TRANSACTIONAL_EMAIL_NAME", ""),
+		MarketingEmailAddress:     utils.GetStringOrDefault("MARKETING_EMAIL", "goo.marketing@example.com"),
+		MarketingEmailName:        utils.GetStringOrDefault("MARKETING_EMAIL_NAME", ""),
+		TransactionalEmailAddress: utils.GetStringOrDefault("TRANSACTIONAL_EMAIL", "goo.transactional@example.com"),
+		TransactionalEmailName:    utils.GetStringOrDefault("TRANSACTIONAL_EMAIL_NAME", ""),
 		Log:                       log,
 	})
 }

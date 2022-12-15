@@ -68,3 +68,63 @@ func NewsletterThanks(mux chi.Router) {
 		}
 	})
 }
+
+type confirmer interface {
+	ConfirmNewsletterSignup(ctx context.Context, token string) (*model.Email, error)
+}
+
+func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
+	mux.Get("/newsletter/confirm", func(w http.ResponseWriter, r *http.Request) {
+		token := r.FormValue("token")
+
+		template, err := views.NewsletterConfirmPage("/newsletter/confirm")
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		err = template.Execute(w, token)
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	})
+
+	mux.Post("/newsletter/confirm", func(w http.ResponseWriter, r *http.Request) {
+		token := r.FormValue("token")
+
+		email, err := s.ConfirmNewsletterSignup(r.Context(), token)
+		if err != nil {
+			http.Error(w, "error saving email address confirmation, refresh to try again", http.StatusBadGateway)
+			return
+		}
+		if email == nil {
+			http.Error(w, "bad token", http.StatusBadRequest)
+			return
+		}
+
+		err = q.Send(r.Context(), model.Message{
+			"job":   "welcome_email",
+			"email": email.String(),
+		})
+		if err != nil {
+			http.Error(w, "error saving email address confirmation, refresh to try again", http.StatusBadGateway)
+			return
+		}
+		http.Redirect(w, r, "/newsletter/confirmed", http.StatusFound)
+	})
+}
+
+func NewsletterConfirmed(mux chi.Router) {
+	mux.Get("/newsletter/confirmed", func(w http.ResponseWriter, r *http.Request) {
+		template, err := views.NewsletterConfirmPage("/newsletter/confirmed")
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		err = template.Execute(w, nil)
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+	})
+}

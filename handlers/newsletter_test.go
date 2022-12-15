@@ -31,6 +31,35 @@ func (s *senderMock) Send(_ context.Context, m model.Message) error {
 	return nil
 }
 
+type confirmerMock struct {
+	token string
+}
+
+func (c *confirmerMock) ConfirmNewsletterSignup(ctx context.Context, token string) (*model.Email, error) {
+	c.token = token
+	email := model.Email("me@example.com")
+	return &email, nil
+}
+
+func TestNewsletterConfirm(t *testing.T) {
+	t.Run("confirms the newsletter signup and sends a message", func(t *testing.T) {
+		mux := chi.NewMux()
+		c := &confirmerMock{}
+		q := &senderMock{}
+		handlers.NewsletterConfirm(mux, c, q)
+
+		code, _, _ := makePostRequest(mux, "/newsletter/confirm", createFormHeader(),
+			strings.NewReader("token=123"))
+		require.Equal(t, http.StatusFound, code)
+		require.Equal(t, "123", c.token)
+
+		require.Equal(t, q.m, model.Message{
+			"job":   "welcome_email",
+			"email": "me@example.com",
+		})
+	})
+}
+
 func TestNewsletterSignup(t *testing.T) {
 	mux := chi.NewMux()
 	s := &signupperMock{}
