@@ -82,7 +82,10 @@ func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		err = template.Execute(w, token)
+		templateParameters := map[string]interface{}{
+			"token": token,
+		}
+		err = template.Execute(w, templateParameters)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return

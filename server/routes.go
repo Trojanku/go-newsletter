@@ -10,4 +10,7 @@ func (s *Server) setupRoutes() {
 
 	handlers.NewsletterSignup(s.log, s.mux, s.database, s.queue)
 	handlers.NewsletterThanks(s.mux)
+
+	handlers.NewsletterConfirm(s.mux, s.database, s.queue)
+	handlers.NewsletterConfirmed(s.mux)
 }
