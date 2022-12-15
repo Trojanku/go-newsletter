@@ -4,6 +4,8 @@ import (
 	"Goo/model"
 	"context"
 	"crypto/rand"
+	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -19,6 +21,25 @@ func (d *Database) SignupForNewsletter(ctx context.Context, email model.Email) (
 			updated = now()`
 	_, err = d.DB.ExecContext(ctx, query, email, token)
 	return token, err
+}
+
+// ConfirmNewsletterSignup with the given token. Returns the associated email if matched.
+func (d *Database) ConfirmNewsletterSignup(ctx context.Context, token string) (*model.Email, error) {
+	var email model.Email
+	query := `
+	update newsletter_subscribers
+	set confirmed = true
+	where token = $1
+	returning email
+	`
+	err := d.DB.GetContext(ctx, &email, query, token)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &email, nil
 }
 
 func createSecret() (string, error) {
