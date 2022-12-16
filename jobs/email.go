@@ -13,7 +13,9 @@ type newsletterConfirmationEmailSender interface {
 }
 
 func SendNewsletterConfirmationEmail(r registry, es newsletterConfirmationEmailSender) {
-	r.Register("confirmation_email", func(ctx context.Context, message model.Message) error {
+	// We want to finish sending this email even though the Runner is supposed to stop -> omit context from runner.
+	// Local context should only take a maximum of 10 seconds. If the job were larger, we would check for cancellation from runner.
+	r.Register("confirmation_email", func(_ context.Context, message model.Message) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -40,7 +42,7 @@ type newsletterWelcomeEmailSender interface {
 }
 
 func SendNewsletterWelcomeEmail(r registry, es newsletterWelcomeEmailSender) {
-	r.Register("welcome_email", func(ctx context.Context, m model.Message) error {
+	r.Register("welcome_email", func(_ context.Context, m model.Message) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
