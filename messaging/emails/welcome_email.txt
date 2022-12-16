@@ -1,0 +1,7 @@
+Welcome to the Goo newsletter. We hope you will enjoy it!
+
+You can always visit us at {{base_url}}.
+
+Goo
+Some Street
+Earth

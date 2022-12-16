@@ -119,7 +119,7 @@ func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
 
 func NewsletterConfirmed(mux chi.Router) {
 	mux.Get("/newsletter/confirmed", func(w http.ResponseWriter, r *http.Request) {
-		template, err := views.NewsletterConfirmPage("/newsletter/confirmed")
+		template, err := views.NewsletterConfirmedPage("/newsletter/confirmed")
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return

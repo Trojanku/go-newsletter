@@ -91,6 +91,24 @@ func (e *Emailer) SendNewsletterConfirmationEmail(_ context.Context, to model.Em
 	})
 }
 
+// SendNewsletterConfirmationEmail with a confirmation link.
+// This is a transactional email, because it's a response to a user action.
+func (e *Emailer) SendNewsletterWelcomeEmail(ctx context.Context, to model.Email) error {
+	keywords := map[string]string{
+		"base_url": e.baseURL,
+	}
+
+	return e.send(requestBody{
+		From:      e.marketingFrom,
+		ToAddress: to.String(),
+		// TODO: change to name
+		ToName:      to.String(),
+		Subject:     "Welcome to the newsletter",
+		ContentHTML: getEmail("welcome_email.html", keywords),
+		ContextText: getEmail("welcome_email.txt", keywords),
+	})
+}
+
 type requestBody struct {
 	From        string
 	ToAddress   string
