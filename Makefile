@@ -4,8 +4,10 @@ export image := `aws lightsail get-container-images --service-name goo | jq -r '
 
 deploy:
 	aws lightsail push-container-image --service-name goo --label app --image goo
+	jq <containers.json ".app.image=\"$(image)\"" >containers2.json
+	mv containers2.json containers.json
 	aws lightsail create-container-service-deployment --service-name goo \
-		--containers '{"app":{"image":"'$(image)'","environment":{"HOST":"","PORT":"8080","LOG_ENV":"production"},"ports":{"8080":"HTTP"}}}' \
+		--containers file://containers.json \
 		--public-endpoint '{"containerName":"app","containerPort":8080,"healthCheck":{"path":"/health"}}'
 		
 build:
