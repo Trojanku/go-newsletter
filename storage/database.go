@@ -2,10 +2,15 @@ package storage
 
 import (
 	"context"
+	"embed"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
 
+	"go.uber.org/zap"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 )
@@ -98,4 +103,35 @@ func (d *Database) Ping(ctx context.Context) error {
 
 	_, err := d.DB.ExecContext(ctx, `select 1`)
 	return err
+}
+
+//go:embed migrations
+var migrations embed.FS
+
+func (d *Database) MigrateTo(ctx context.Context, version uint) error {
+	m, err := d.getMigrate()
+	if err != nil {
+		return err
+	}
+	return m.Migrate(version)
+}
+
+func (d *Database) MigrateUp(ctx context.Context) error {
+	m, err := d.getMigrate()
+	if err != nil {
+		return err
+	}
+	return m.Up()
+}
+
+func (d *Database) getMigrate() (*migrate.Migrate, error) {
+	filesDriver, err := iofs.New(migrations, "migrations")
+	if err != nil {
+		return nil, err
+	}
+	driver, err := postgres.WithInstance(d.DB.DB, &postgres.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return migrate.NewWithInstance("iofs", filesDriver, "goo", driver)
 }

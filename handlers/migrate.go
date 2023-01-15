@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type migrator interface {
-	MigrateTo(ctx context.Context, version string) error
+	MigrateTo(ctx context.Context, version uint) error
 	MigrateUp(ctx context.Context) error
 }
 
@@ -19,7 +20,12 @@ func MigrateTo(mux chi.Router, m migrator) {
 			http.Error(w, "version is empty", http.StatusBadRequest)
 			return
 		}
-		if err := m.MigrateTo(r.Context(), version); err != nil {
+		versionNum, err := strconv.Atoi(version)
+		if err != nil {
+			http.Error(w, "version is not number", http.StatusBadRequest)
+			return
+		}
+		if err := m.MigrateTo(r.Context(), uint(versionNum)); err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		}

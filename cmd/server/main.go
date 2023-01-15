@@ -10,15 +10,16 @@ import (
 	"Goo/utils"
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/smithy-go/logging"
 	"go.uber.org/zap"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -64,11 +65,12 @@ func start() int {
 	queue := createQueue(log, awsConfig)
 
 	s := server.New(server.Options{
-		Database: createDatabase(log),
-		Host:     host,
-		Log:      log,
-		Port:     port,
-		Queue:    queue,
+		AdminPassword: utils.GetStringOrDefault("ADMIN_PASSWORD", "eyDawVH9LLZtaG2q"),
+		Database:      createDatabase(log),
+		Host:          host,
+		Log:           log,
+		Port:          port,
+		Queue:         queue,
 	})
 
 	r := jobs.NewRunner(jobs.NewRunnerOptions{
