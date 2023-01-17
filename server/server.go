@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"net"
 	"net/http"
 	"strconv"
@@ -17,27 +18,35 @@ import (
 )
 
 type Server struct {
-	address       string
-	adminPassword string
-	database      *storage.Database
-	log           *zap.Logger
-	mux           chi.Router
-	queue         *messaging.Queue
-	server        *http.Server
+	address         string
+	adminPassword   string
+	database        *storage.Database
+	log             *zap.Logger
+	metricsPassword string
+	metrics         *prometheus.Registry
+	mux             chi.Router
+	queue           *messaging.Queue
+	server          *http.Server
 }
 
 type Options struct {
-	AdminPassword string
-	Database      *storage.Database
-	Host          string
-	Log           *zap.Logger
-	Port          int
-	Queue         *messaging.Queue
+	AdminPassword   string
+	Database        *storage.Database
+	Host            string
+	Log             *zap.Logger
+	MetricsPassword string
+	Metrics         *prometheus.Registry
+	Port            int
+	Queue           *messaging.Queue
 }
 
 func New(opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = zap.NewNop()
+	}
+
+	if opts.Metrics == nil {
+		opts.Metrics = prometheus.NewRegistry()
 	}
 
 	address := net.JoinHostPort(opts.Host, strconv.Itoa(opts.Port))
@@ -47,12 +56,14 @@ func New(opts Options) *Server {
 	mux := chi.NewMux()
 
 	return &Server{
-		address:       address,
-		adminPassword: opts.AdminPassword,
-		database:      opts.Database,
-		log:           opts.Log,
-		mux:           mux,
-		queue:         opts.Queue,
+		address:         address,
+		adminPassword:   opts.AdminPassword,
+		database:        opts.Database,
+		log:             opts.Log,
+		metricsPassword: opts.MetricsPassword,
+		metrics:         opts.Metrics,
+		mux:             mux,
+		queue:           opts.Queue,
 		server: &http.Server{
 			Addr:              address,
 			Handler:           mux,
