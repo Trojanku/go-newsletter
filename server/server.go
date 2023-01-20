@@ -77,9 +77,6 @@ func New(opts Options) *Server {
 
 // Start the Server by setting up routes and listening for HTTP requests on the given address.
 func (s *Server) Start() error {
-	if err := s.database.Connect(); err != nil {
-		return fmt.Errorf("error connecting to database: %w", err)
-	}
 	s.setupRoutes()
 
 	fmt.Println("starting on", s.address)

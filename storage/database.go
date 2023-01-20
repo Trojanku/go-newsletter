@@ -4,6 +4,8 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"time"
 
 	"go.uber.org/zap"
@@ -27,6 +29,7 @@ type Database struct {
 	connectionMaxLifetime time.Duration
 	connectionMaxIdleTime time.Duration
 	log                   *zap.Logger
+	metrics               *prometheus.Registry
 }
 
 type NewDatabaseOptions struct {
@@ -40,11 +43,15 @@ type NewDatabaseOptions struct {
 	ConnectionMaxLifetime time.Duration
 	ConnectionMaxIdleTime time.Duration
 	Log                   *zap.Logger
+	Metrics               *prometheus.Registry
 }
 
 func NewDatabase(opts NewDatabaseOptions) *Database {
 	if opts.Log == nil {
 		opts.Log = zap.NewNop()
+	}
+	if opts.Metrics == nil {
+		opts.Metrics = prometheus.NewRegistry()
 	}
 	return &Database{
 		host:                  opts.Host,
@@ -57,6 +64,7 @@ func NewDatabase(opts NewDatabaseOptions) *Database {
 		connectionMaxIdleTime: opts.ConnectionMaxIdleTime,
 		connectionMaxLifetime: opts.ConnectionMaxLifetime,
 		log:                   opts.Log,
+		metrics:               opts.Metrics,
 	}
 }
 
@@ -81,6 +89,8 @@ func (d *Database) Connect() error {
 	d.DB.SetMaxIdleConns(d.maxIdleConnections)
 	d.DB.SetConnMaxLifetime(d.connectionMaxLifetime)
 	d.DB.SetConnMaxIdleTime(d.connectionMaxIdleTime)
+
+	d.metrics.MustRegister(collectors.NewDBStatsCollector(d.DB.DB, d.name))
 
 	return nil
 }

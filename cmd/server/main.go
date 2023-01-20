@@ -10,6 +10,8 @@ import (
 	"Goo/utils"
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -62,20 +64,32 @@ func start() int {
 		log.Info("Error creating AWS config", zap.Error(err))
 	}
 
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	registry.MustRegister(collectors.NewGoCollector())
+
 	queue := createQueue(log, awsConfig)
+	db := createDatabase(log, registry)
+	if err = db.Connect(); err != nil {
+		log.Info("Error connecting to database", zap.Error(err))
+		return 1
+	}
 
 	s := server.New(server.Options{
-		AdminPassword: utils.GetStringOrDefault("ADMIN_PASSWORD", "eyDawVH9LLZtaG2q"),
-		Database:      createDatabase(log),
-		Host:          host,
-		Log:           log,
-		Port:          port,
-		Queue:         queue,
+		AdminPassword:   utils.GetStringOrDefault("ADMIN_PASSWORD", "eyDawVH9LLZtaG2q"),
+		Database:        db,
+		Host:            host,
+		Log:             log,
+		MetricsPassword: utils.GetStringOrDefault("METRICS_PASSWORD", "12345678"),
+		Metrics:         registry,
+		Port:            port,
+		Queue:           queue,
 	})
 
 	r := jobs.NewRunner(jobs.NewRunnerOptions{
 		Emailer: createEmailer(log, host, port),
 		Log:     log,
+		Metrics: registry,
 		Queue:   queue,
 	})
 
@@ -150,7 +164,7 @@ func createAWSEndpointResolver() aws.EndpointResolverWithOptionsFunc {
 	}
 }
 
-func createDatabase(log *zap.Logger) *storage.Database {
+func createDatabase(log *zap.Logger, registry *prometheus.Registry) *storage.Database {
 	return storage.NewDatabase(storage.NewDatabaseOptions{
 		Host:                  utils.GetStringOrDefault("DB_HOST", "localhost"),
 		Port:                  utils.GetIntOrDefault("DB_PORT", 5432),
@@ -161,6 +175,7 @@ func createDatabase(log *zap.Logger) *storage.Database {
 		MaxIdleConnections:    utils.GetIntOrDefault("DB_MAX_IDLE_CONNECTIONS", 10),
 		ConnectionMaxLifetime: utils.GetDurationOrDefault("DB_CONNECTION_MAX_LIFETIME", time.Hour),
 		Log:                   log,
+		Metrics:               registry,
 	})
 }
 

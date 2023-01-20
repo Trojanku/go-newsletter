@@ -5,6 +5,7 @@ import (
 	"Goo/jobs"
 	"Goo/model"
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -53,6 +54,56 @@ func TestRunner_Start(t *testing.T) {
 		require.Equal(t, "Starting", logs.All()[0].Message)
 		require.Equal(t, "Successfully ran job", logs.All()[1].Message)
 		require.Equal(t, "Stopping", logs.All()[2].Message)
+	})
+
+	t.Run("emits job metrics", func(t *testing.T) {
+		queue, cleanup := integrationtest.CreateQueue()
+		defer cleanup()
+
+		registry := prometheus.NewRegistry()
+
+		runner := jobs.NewRunner(jobs.NewRunnerOptions{
+			Metrics: registry,
+			Queue:   queue,
+		})
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		runner.Register("test", func(ctx context.Context, message model.Message) error {
+			cancel()
+			return nil
+		})
+
+		err := queue.Send(context.Background(), model.Message{"job": "test"})
+		require.NoError(t, err)
+
+		runner.Start(ctx)
+
+		metrics, err := registry.Gather()
+		require.NoError(t, err)
+		require.Equal(t, 3, len(metrics))
+
+		metric := metrics[0]
+		require.Equal(t, "app_job_duration_seconds_total", metric.GetName())
+		require.Equal(t, "name", metric.Metric[0].Label[0].GetName())
+		require.Equal(t, "test", metric.Metric[0].Label[0].GetValue())
+		require.Equal(t, "success", metric.Metric[0].Label[1].GetName())
+		require.Equal(t, "true", metric.Metric[0].Label[1].GetValue())
+		require.True(t, metric.Metric[0].Counter.GetValue() > 0)
+
+		metric = metrics[1]
+		require.Equal(t, "app_job_runner_receives_total", metric.GetName())
+		require.Equal(t, "success", metric.Metric[0].Label[0].GetName())
+		require.Equal(t, "true", metric.Metric[0].Label[0].GetValue())
+		require.True(t, metric.Metric[0].Counter.GetValue() > 0)
+
+		metric = metrics[2]
+		require.Equal(t, "app_jobs_total", metric.GetName())
+		require.Equal(t, "name", metric.Metric[0].Label[0].GetName())
+		require.Equal(t, "test", metric.Metric[0].Label[0].GetValue())
+		require.Equal(t, "success", metric.Metric[0].Label[1].GetName())
+		require.Equal(t, "true", metric.Metric[0].Label[1].GetValue())
+		require.Equal(t, float64(1), metric.Metric[0].Counter.GetValue())
 	})
 }
 
