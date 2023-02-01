@@ -4,13 +4,15 @@ import (
 	"Goo/handlers"
 	"Goo/model"
 	"context"
-	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type signupperMock struct {
@@ -46,7 +48,7 @@ func TestNewsletterConfirm(t *testing.T) {
 		mux := chi.NewMux()
 		c := &confirmerMock{}
 		q := &senderMock{}
-		handlers.NewsletterConfirm(mux, c, q)
+		handlers.NewsletterConfirm(mux, c, q, zap.NewNop())
 
 		code, _, _ := makePostRequest(mux, "/newsletter/confirm", createFormHeader(),
 			strings.NewReader("token=123"))
@@ -64,7 +66,7 @@ func TestNewsletterSignup(t *testing.T) {
 	mux := chi.NewMux()
 	s := &signupperMock{}
 	q := &senderMock{}
-	handlers.NewsletterSignup(nil, mux, s, q)
+	handlers.NewsletterSignup(mux, s, q, zap.NewNop())
 
 	t.Run("signs up a valid email address and sends a message", func(t *testing.T) {
 		code, _, _ := makePostRequest(mux, "/newsletter/signup", createFormHeader(),

@@ -4,10 +4,10 @@ import (
 	"Goo/model"
 	"Goo/views"
 	"context"
-	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type signupper interface {
@@ -18,13 +18,8 @@ type sender interface {
 	Send(ctx context.Context, m model.Message) error
 }
 
-func NewsletterSignup(log *zap.Logger, mux chi.Router, s signupper, q sender) {
+func NewsletterSignup(mux chi.Router, s signupper, q sender, log *zap.Logger) {
 	mux.Post("/newsletter/signup", func(w http.ResponseWriter, r *http.Request) {
-
-		if log == nil {
-			log = zap.NewNop()
-		}
-
 		email := model.Email(r.FormValue("email"))
 
 		if !email.IsValid() {
@@ -34,7 +29,7 @@ func NewsletterSignup(log *zap.Logger, mux chi.Router, s signupper, q sender) {
 
 		token, err := s.SignupForNewsletter(r.Context(), email)
 		if err != nil {
-			log.Error(fmt.Sprintf("error signing up for newsletter: %v", err))
+			log.Info("Error signing up for newsletter", zap.Error(err))
 			http.Error(w, "error signing up, refresh to try again", http.StatusBadGateway)
 			return
 		}
@@ -45,7 +40,7 @@ func NewsletterSignup(log *zap.Logger, mux chi.Router, s signupper, q sender) {
 			"token": token,
 		})
 		if err != nil {
-			log.Error(fmt.Sprintf("error sending newsletter message to queue: %v", err))
+			log.Info("Error sending confirmation email message", zap.Error(err))
 			http.Error(w, "error signing up, refresh to try again", http.StatusBadGateway)
 			return
 		}
@@ -73,7 +68,7 @@ type confirmer interface {
 	ConfirmNewsletterSignup(ctx context.Context, token string) (*model.Email, error)
 }
 
-func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
+func NewsletterConfirm(mux chi.Router, s confirmer, q sender, log *zap.Logger) {
 	mux.Get("/newsletter/confirm", func(w http.ResponseWriter, r *http.Request) {
 		token := r.FormValue("token")
 
@@ -97,6 +92,7 @@ func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
 
 		email, err := s.ConfirmNewsletterSignup(r.Context(), token)
 		if err != nil {
+			log.Info("Error confirming newsletter signup", zap.Error(err))
 			http.Error(w, "error saving email address confirmation, refresh to try again", http.StatusBadGateway)
 			return
 		}
@@ -110,6 +106,7 @@ func NewsletterConfirm(mux chi.Router, s confirmer, q sender) {
 			"email": email.String(),
 		})
 		if err != nil {
+			log.Info("Error sending welcome email message", zap.Error(err))
 			http.Error(w, "error saving email address confirmation, refresh to try again", http.StatusBadGateway)
 			return
 		}
